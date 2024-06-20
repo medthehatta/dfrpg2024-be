@@ -25,6 +25,7 @@ def process_command(game, cmd):
     # Establish initiative roll
     # Compute turn order
     # Clear turn order and initiative rolls
+    pass
 
 
 #
@@ -57,8 +58,6 @@ def main():
     print("Populating with log...")
     populate()
     print("Done.")
-    print("Reading stream...")
-    main_loop()
 
 
 if __name__ == "__main__":

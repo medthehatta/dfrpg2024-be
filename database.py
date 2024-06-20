@@ -8,14 +8,17 @@ import datetime
 from redis import Redis
 
 
-redis = Redis(host="localhost", port=6379, db=0, decode_responses=True)
+redis_port = os.environ.get("REDIS_PORT", "6379")
+
+
+redis = Redis(host="localhost", port=redis_port, db=0, decode_responses=True)
 
 checkpoint = "persist-checkpoint"
 keep = 50
 
 
 def get_checkpoint():
-    return redis.get(checkpoint) or 0
+    return int(redis.get(checkpoint) or 0)
 
 
 def incr_checkpoint():

@@ -1,30 +1,13 @@
 import litestar
 from command_stream import insert_command
+from command_stream import wait_for_result
 import database
 from functools import wraps
 
+from errors import _ok
+from errors import _exception
+from errors import _fail
 
-def _ok(result=None):
-    if result is not None:
-        return {"ok": True, "result": result}
-    else:
-        return {"ok": True}
-
-
-def _exception(exception):
-    return {
-        "ok": False,
-        "error": str(type(exception)),
-        "description": str(exception.args),
-    }
-
-
-def _fail(message):
-    return {
-        "ok": False,
-        "error": "Operation failed",
-        "description": message,
-    }
 
 
 @litestar.get("/")
@@ -34,7 +17,11 @@ async def index() -> dict:
 
 @litestar.post("/commands")
 async def issue_command(data: dict) -> dict:
-    return insert_command(data)
+    key = insert_command(data)
+    try:
+        return _ok(wait_for_result(key))
+    except Exception as err:
+        return _exception(err)
 
 
 @litestar.get("/checkpoint")

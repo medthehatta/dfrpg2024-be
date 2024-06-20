@@ -1,2 +1,3 @@
 litestar
 uvicorn
+redis
