@@ -398,11 +398,13 @@ def populate():
 
 
 def main_loop():
+    last = "$"
     while True:
         with editing() as game:
-            for (entry_id, command) in wait_for_commands():
+            for (entry_id, command) in wait_for_commands(last):
                 res = process_command(game, command, entry_id=entry_id)
                 print(f"main | {command} | {res}")
+                last = entry_id
 
 
 def main():

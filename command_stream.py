@@ -12,10 +12,9 @@ command_stream = "commands"
 
 
 
-def wait_for_commands():
-    result = redis.xread(streams={command_stream: "$"}, block=0)
+def wait_for_commands(last="$"):
+    result = redis.xread(streams={command_stream: last}, block=0)
     entries = dict(result)
-    print(entries)
     for (entry_id, entry) in entries[command_stream]:
         yield (entry_id, json.loads(entry["data"]))
 
