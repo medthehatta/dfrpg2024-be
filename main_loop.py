@@ -112,6 +112,7 @@ def _create_entity(game, cmd):
             f"Entity {name} already exists!",
         )
     entities[name] = {
+        "name": name,
         "fate": 0,
         "refresh": refresh,
         "aspects": [],
@@ -140,8 +141,7 @@ def _set_entity(game, cmd):
 @cmds.register("remove_entity")
 def _remove_entity(game, cmd):
     g = game["data"]
-    name = cmd["name"]
-    entity_name = cmd["entity"]
+    name = cmd["entity"]
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
@@ -207,21 +207,28 @@ def _add_aspect(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
     aspect = {}
-    aspect["name"] = cmd["aspect"]
+    aspect["name"] = cmd["name"]
     if "kind" in cmd:
         aspect["kind"] = cmd["kind"]
     if "tags" in cmd:
         aspect["tags"] = cmd["tags"]
     e = get_path(g, ["entities", entity])
-    e["aspects"].append(aspect)
-    return _ok(e)
+    existing = [a["name"] for a in e["aspects"]]
+    if aspect in existing:
+        return _error(
+            existing,
+            f"Aspect {aspect} already present on {entity}",
+        )
+    else:
+        e["aspects"].append(aspect)
+        return _ok(e)
 
 
 @cmds.register("remove_aspect")
 def _remove_aspect(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
-    aspect_name = cmd["aspect"]
+    aspect_name = cmd["name"]
     e = get_path(g, ["entities", entity])
     current_names = [a["name"] for a in e.get("aspects", [])]
     if aspect_name in current_names:
@@ -250,8 +257,42 @@ def _remove_all_temp_aspects(game, cmd):
         entity = get_path(g, ["entities", entity_name])
         entity["aspects"] = [
             a for a in entity.get("aspects", [])
-            if a["kind"] not in long_aspects
+            if a.get("kind") in long_aspects
         ]
+    return _ok(g["entities"])
+
+
+@cmds.register("clear_consequences")
+def _clear_consequences(game, cmd):
+    g = game["data"]
+    severities = [
+        "mild",
+        "moderate",
+        "severe",
+        "extreme",
+    ]
+    sev = cmd["max_severity"]
+
+    try:
+        last_sev_idx = severities.index(sev)
+    except ValueError:
+        return _error(
+            severities,
+            f"Invalid severity: {sev}"
+        )
+
+    aspects_to_keep = severities[:last_sev_idx+2]
+
+    if "entities" not in g:
+        g["entities"] = {}
+
+    for entity_name in g.get("entities", []):
+        entity = get_path(g, ["entities", entity_name])
+        entity["aspects"] = [
+            a for a in entity.get("aspects", [])
+            if a.get("kind") in aspects_to_keep
+        ]
+
     return _ok(g["entities"])
 
 

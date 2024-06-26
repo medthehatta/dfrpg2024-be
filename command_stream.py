@@ -29,7 +29,6 @@ def read_command_log():
 def insert_command(command):
     added = redis.xadd(command_stream, {"data": json.dumps(command)})
     store_result(NOT_READY, added)
-    redis.save()
     return added
 
 
@@ -50,9 +49,9 @@ def wait_for_result(key):
 
     query_eventually(
         lambda: (key, read_result(key)),
-        lambda result: result[1] is not None,
+        lambda result: result[1] not in [None, NOT_READY],
         interval=1,
-        max_time=3,
+        max_time=10,
     )
 
     return read_result(key)

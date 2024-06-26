@@ -10,7 +10,7 @@ services:
       # DEVELOPMENT
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-      - REDIS_AOF_ENABLED=no
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
       - '6379:6379'
     volumes:

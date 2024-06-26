@@ -1,31 +1,22 @@
-import json
-from command_stream import wait_for_commands
-from command_stream import read_command_log
 from contextlib import contextmanager
-from database import editing
+import glob
+import json
+import os
+import time
+
+from command_stream import insert_command
+from command_stream import wait_for_result
+from command_stream import read_command_log
+import database
+
+from errors import _ok
+from errors import _exception
+from errors import _error
 
 
 #
 # Processing
 #
-
-
-def process_command(game, cmd):
-    # Inflict stress
-    # Clear stress box
-    # Clear all stress
-    # Add aspect
-    # Tag aspect
-    # Remove aspect
-    # Clear temporary aspects
-    # Increment FP
-    # Decrement FP
-    # Set FP
-    # Refresh FP
-    # Establish initiative roll
-    # Compute turn order
-    # Clear turn order and initiative rolls
-    pass
 
 
 #
@@ -36,29 +27,57 @@ def process_command(game, cmd):
 stream = "commands"
 
 
-def commands_incoming():
-    while True:
-        yield from wait_for_commands()
+def reset():
+    for x in glob.glob("db-save-*"):
+        os.remove(x)
+    for k in database.redis.keys():
+        database.redis.delete(k)
 
 
-def populate():
-    with editing() as game:
-        for command in read_command_log():
-            process_command(game, command)
+def issue(cmd):
+    key = insert_command(cmd)
+    try:
+        return _ok(wait_for_result(key))
+    except Exception as err:
+        return _exception(err)
 
 
-def main_loop():
-    while True:
-        with editing() as game:
-            for command in wait_for_commands():
-                process_command(game, command)
+def pissue(cmd):
+    res = issue(cmd)
+    print(json.dumps(res))
+    return res
 
 
-def main():
-    print("Populating with log...")
-    populate()
-    print("Done.")
-
-
-if __name__ == "__main__":
-    main()
+def setup():
+    pissue(
+        {
+            "command": "create_entity",
+            "name": "Umbra",
+            "stress_maxes": {"physical": 5, "mental": 2, "hunger": 2},
+            "refresh": 2,
+        }
+    )
+    pissue(
+        {
+            "command": "create_entity",
+            "name": "Rayne",
+            "stress_maxes": {"physical": 7, "mental": 2, "hunger": 3},
+            "refresh": 3,
+        }
+    )
+    pissue(
+        {
+            "command": "create_entity",
+            "name": "Smelly",
+            "stress_maxes": {"physical": 7, "mental": 2, "hunger": 3},
+            "refresh": 3,
+        }
+    )
+    pissue(
+        {
+            "command": "create_entity",
+            "name": "Tasty",
+            "stress_maxes": {"physical": 7, "mental": 2, "hunger": 3},
+            "refresh": 3,
+        }
+    )

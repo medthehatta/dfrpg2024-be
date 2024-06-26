@@ -7,7 +7,8 @@ from functools import wraps
 from errors import _ok
 from errors import _exception
 from errors import _fail
-
+from errors import _error
+from utils import get_path
 
 
 @litestar.get("/")
@@ -34,4 +35,35 @@ async def get_game() -> dict:
     return _ok(database.read())
 
 
-app = litestar.Litestar([index, issue_command, get_checkpoint, get_game])
+@litestar.get("/entity/{name:str}", sync_to_thread=False)
+async def get_entity(name: str) -> dict:
+    data = database.read()
+    entity = get_path(data, ["entities", name], default=None)
+    if entity is None:
+        return _error(
+            data.get("entities", []),
+            f"No such entity '{name}'",
+        )
+    else:
+        return _ok(entity)
+
+
+@litestar.put("/entity/{name:str}", sync_to_thread=False)
+async def put_entity(data: dict) -> dict:
+    cmd = {"command": "set_entity", "entity_value": data}
+    key = insert_command(cmd)
+    try:
+        return _ok(wait_for_result(key))
+    except Exception as err:
+        return _exception(err)
+
+
+routes = [
+    index,
+    issue_command,
+    get_checkpoint,
+    get_game,
+    get_entity,
+    put_entity,
+]
+app = litestar.Litestar(routes)
