@@ -5,13 +5,8 @@ import os
 import re
 import datetime
 
-from redis import Redis
+from db_redis import redis
 
-
-redis_port = os.environ.get("REDIS_PORT", "6379")
-
-
-redis = Redis(host="localhost", port=redis_port, db=0, decode_responses=True)
 
 checkpoint = "persist-checkpoint"
 keep = 50

@@ -1,13 +1,9 @@
 import json
 import os
 
-from redis import Redis
+from db_redis import redis
 
 from utils import query_eventually
-
-redis_port = os.environ.get("REDIS_PORT", "6379")
-
-redis = Redis(host="localhost", port=redis_port, db=0, decode_responses=True)
 
 
 RESULT_TTL = 3600
