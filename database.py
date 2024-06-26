@@ -41,13 +41,13 @@ def checkpoint_data():
     mtimes = [os.path.getmtime(p) for p in listing]
     return {
         "current": current,
-        "listing": {
+        "listing": [
             {
-                "path": re.search(r'db-save-(\d+).json', path).group(1),
+                "path": int(re.search(r'db-save-(\d+).json', path).group(1)),
                 "mtime": datetime.datetime.fromtimestamp(mtime).isoformat(),
             }
             for (path, mtime) in zip(listing, mtimes)
-        },
+        ],
     }
 
 
@@ -69,7 +69,7 @@ def incrementing_checkpoint():
 def read():
     k = get_checkpoint()
     if k == 0:
-        return None
+        return {}
 
     with open(f"db-save-{k}.json", "r") as f:
         return json.load(f)
@@ -86,7 +86,8 @@ def write(data):
 @contextmanager
 def editing():
     game = read()
+    enveloped = {"data": game}
     try:
-        yield game
+        yield enveloped
     finally:
-        write(game)
+        write(enveloped.get("data", {}))

@@ -10,6 +10,7 @@ redis_port = os.environ.get("REDIS_PORT", "6379")
 redis = Redis(host="localhost", port=redis_port, db=0, decode_responses=True)
 
 
+RESULT_TTL = 3600
 NOT_READY = "__NOT__READY__"
 command_stream = "commands"
 
@@ -38,6 +39,7 @@ def insert_command(command):
 
 def store_result(data, key):
     redis.set(key, json.dumps(data))
+    redis.expire(key, RESULT_TTL)
 
 
 def read_result(key):

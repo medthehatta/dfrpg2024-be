@@ -173,8 +173,9 @@ def commands_incoming():
 def populate():
     with editing() as game:
         for (_, command) in read_command_log():
+            print(game)
             res = process_command(game, command, entry_id=None)
-            print(f"{command} | {res}")
+            print(f"populate | {command} | {res}")
 
 
 def main_loop():
@@ -182,7 +183,7 @@ def main_loop():
         with editing() as game:
             for (entry_id, command) in wait_for_commands():
                 res = process_command(game, command, entry_id=entry_id)
-                print(f"{command} | {res}")
+                print(f"main | {command} | {res}")
 
 
 def main():

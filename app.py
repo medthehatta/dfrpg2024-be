@@ -26,7 +26,12 @@ async def issue_command(data: dict) -> dict:
 
 @litestar.get("/checkpoint")
 async def get_checkpoint() -> dict:
-    return database.checkpoint_data()
+    return _ok(database.checkpoint_data())
 
 
-app = litestar.Litestar([index, issue_command, get_checkpoint])
+@litestar.get("/game")
+async def get_game() -> dict:
+    return _ok(database.read())
+
+
+app = litestar.Litestar([index, issue_command, get_checkpoint, get_game])
