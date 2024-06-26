@@ -46,11 +46,17 @@ def read_result(key):
 
 def wait_for_result(key):
 
+    def _read_result():
+        return read_result(key)
+
+    def _is_ready(result):
+        return result not in [None, NOT_READY]
+
     query_eventually(
-        lambda: (key, read_result(key)),
-        lambda result: result[1] not in [None, NOT_READY],
+        _read_result,
+        _is_ready,
         interval=1,
-        max_time=10,
+        max_time=9,
     )
 
     return read_result(key)
