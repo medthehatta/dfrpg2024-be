@@ -35,7 +35,7 @@ async def get_game() -> dict:
     return _ok(database.read())
 
 
-@litestar.get("/entity/{name:str}", sync_to_thread=False)
+@litestar.get("/entity/{name:str}")
 async def get_entity(name: str) -> dict:
     data = database.read()
     entity = get_path(data, ["entities", name], default=None)
@@ -48,7 +48,7 @@ async def get_entity(name: str) -> dict:
         return _ok(entity)
 
 
-@litestar.put("/entity/{name:str}", sync_to_thread=False)
+@litestar.put("/entity/{name:str}")
 async def put_entity(data: dict) -> dict:
     cmd = {"command": "set_entity", "entity_value": data}
     key = insert_command(cmd)
