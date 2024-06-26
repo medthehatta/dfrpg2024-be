@@ -99,10 +99,13 @@ def process_command(game, cmd, entry_id=None):
 
 @cmds.register("create_entity")
 def _create_entity(game, cmd):
+    g = game["data"]
     name = cmd["name"]
     maxes = cmd["stress_maxes"]
     refresh = cmd["refresh"]
-    entities = get_path(game, ["entities"])
+    if "entities" not in g:
+        g["entities"] = {}
+    entities = get_path(g, ["entities"])
     if name in entities:
         return _error(
             list(entities.keys()),
@@ -117,39 +120,214 @@ def _create_entity(game, cmd):
     return _ok(entities[name])
 
 
+@cmds.register("set_entity")
+def _set_entity(game, cmd):
+    g = game["data"]
+    name = cmd["name"]
+    entity_value = cmd["entity_value"]
+    if "entities" not in g:
+        g["entities"] = {}
+    entities = get_path(g, ["entities"])
+    if name in entities:
+        return _error(
+            list(entities.keys()),
+            f"Entity {name} already exists!",
+        )
+    entities[name] = entity_value
+    return _ok(entities[name])
+
+
+@cmds.register("remove_entity")
+def _remove_entity(game, cmd):
+    g = game["data"]
+    name = cmd["name"]
+    entity_name = cmd["entity"]
+    if "entities" not in g:
+        g["entities"] = {}
+    entities = get_path(g, ["entities"])
+    if name not in entities:
+        return _error(
+            list(entities.keys()),
+            f"Entity {name} not present!",
+        )
+    else:
+        entities.pop(name)
+        return _ok(entities)
+
+
 @cmds.register("decrement_fp")
 def _decrement_fp(game, cmd):
+    g = game["data"]
     entity = cmd["entity"]
-    fp = get_path(game, ["entities", entity, "fate"])
+    e = get_path(g, ["entities", entity])
+    fp = e["fate"]
     if fp >= 1:
-        e = get_path(game, ["entities", entity])
         e["fate"] -= 1
-        return _ok(get_path(game, ["entities", entity]))
+        return _ok(e)
     else:
         return _error(
-            get_path(game, ["entities", entity]),
+            e,
             "Not enough FP to decrement",
         )
 
 
+@cmds.register("increment_fp")
+def _increment_fp(game, cmd):
+    g = game["data"]
+    entity = cmd["entity"]
+    e = get_path(g, ["entities", entity])
+    e["fate"] += 1
+    return _ok(e)
+
+
 @cmds.register("set_fp")
 def _set_fp(game, cmd):
+    g = game["data"]
     entity = cmd["entity"]
     fp = cmd["fp"]
-    e = get_path(game, ["entities", entity])
+    e = get_path(g, ["entities", entity])
     e["fate"] = fp
-    return _ok(get_path(game, ["entities", entity]))
+    return _ok(e)
 
 
 @cmds.register("refresh_fp")
 def _refresh_fp(game, cmd):
+    g = game["data"]
     entity = cmd["entity"]
-    refresh = get_path(game, ["entities", entity, "refresh"])
-    fp = get_path(game, ["entities", entity, "fate"])
+    e = get_path(g, ["entities", entity])
+    refresh = e["refresh"]
+    fp = e["fate"]
     new = max(fp, refresh)
-    e = get_path(game, ["entities", entity])
     e["fate"] = new
-    return _ok(get_path(game, ["entities", entity]))
+    return _ok(e)
+
+
+@cmds.register("add_aspect")
+def _add_aspect(game, cmd):
+    g = game["data"]
+    entity = cmd["entity"]
+    aspect = {}
+    aspect["name"] = cmd["aspect"]
+    if "kind" in cmd:
+        aspect["kind"] = cmd["kind"]
+    if "tags" in cmd:
+        aspect["tags"] = cmd["tags"]
+    e = get_path(g, ["entities", entity])
+    e["aspects"].append(aspect)
+    return _ok(e)
+
+
+@cmds.register("remove_aspect")
+def _remove_aspect(game, cmd):
+    g = game["data"]
+    entity = cmd["entity"]
+    aspect_name = cmd["aspect"]
+    e = get_path(g, ["entities", entity])
+    current_names = [a["name"] for a in e.get("aspects", [])]
+    if aspect_name in current_names:
+        e["aspects"] = [a for a in e.get("aspects", []) if a["name"] != aspect_name]
+        return _ok(e)
+    else:
+        return _error(
+            e["aspects"],
+            f"No aspect '{aspect_name}' present on '{entity}'",
+        )
+
+
+@cmds.register("remove_all_temporary_aspects")
+def _remove_all_temp_aspects(game, cmd):
+    g = game["data"]
+    long_aspects = [
+        "mild",
+        "moderate",
+        "severe",
+        "extreme",
+        "sticky",
+    ]
+    if "entities" not in g:
+        g["entities"] = {}
+    for entity_name in g.get("entities", []):
+        entity = get_path(g, ["entities", entity_name])
+        entity["aspects"] = [
+            a for a in entity.get("aspects", [])
+            if a["kind"] not in long_aspects
+        ]
+    return _ok(g["entities"])
+
+
+@cmds.register("add_stress")
+def _add_stress(game, cmd):
+    g = game["data"]
+    stress_kind = cmd["stress"]
+    box = cmd["box"]
+    entity = cmd["entity"]
+    e = get_path(g, ["entities", entity])
+    s = get_path(e, ["stress", stress_kind], default=None)
+    if s is None:
+        return _error(e, f"Entity {entity} has no stress track {stress_kind}")
+    if box > s["max"]:
+        return _error(
+            e,
+            (
+                f"Entity {entity} cannot take {box} {stress_kind} "
+                f"stress without consequence!"
+            ),
+        )
+    if box in s["checked"]:
+        return _error(
+            e,
+            (
+                f"Entity {entity} already has the {box} "
+                f"{stress_kind} stress checked"
+            ),
+        )
+    # Otherwise
+    s["checked"].append(box)
+    return _ok(e)
+
+
+@cmds.register("clear_stress_box")
+def _clear_stress_box(game, cmd):
+    g = game["data"]
+    stress_kind = cmd["stress"]
+    box = cmd["box"]
+    entity = cmd["entity"]
+    e = get_path(g, ["entities", entity])
+    s = get_path(e, ["stress", stress_kind], default=None)
+    if s is None:
+        return _error(e, f"Entity {entity} has no stress track {stress_kind}")
+    if box > s["max"]:
+        return _error(
+            e,
+            (
+                f"Entity {entity} does not have a {box} {stress_kind} "
+                f"stress box at all"
+            ),
+        )
+    if box not in s["checked"]:
+        return _error(
+            e,
+            (
+                f"Entity {entity} doesn't have the {box} "
+                f"{stress_kind} stress box checked"
+            ),
+        )
+    # Otherwise
+    s["checked"] = [b for b in s["checked"] if b != box]
+    return _ok(e)
+
+
+@cmds.register("clear_all_stress")
+def _clear_all_stress(game, cmd):
+    g = game["data"]
+    if "entities" not in g:
+        g["entities"] = {}
+    entities = get_path(g, ["entities"])
+    for entity in entities:
+        e = entities[entity]
+        for s in e["stress"]:
+            e[s]["checked"] = []
+    return _ok(entities)
 
 
 @cmds.register("test")
