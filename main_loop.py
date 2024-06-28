@@ -13,37 +13,6 @@ from errors import _exception
 from errors import _fail
 
 
-example_game = {
-    "entities": {
-        "Umbra": {
-            "fate": 5,
-            "refresh": 9,
-            "stress": {
-                "physical": {
-                    "checked": [2, 4],
-                    "max": 5,
-                },
-                "mental": {
-                    "checked": [],
-                    "max": 2,
-                },
-                "hunger": {
-                    "checked": [1, 2],
-                    "max": 3,
-                },
-            },
-            "aspects": [
-                {"name": "Well-rested"},
-                {"name": "Rekt", "kind": "temporary"},
-                {"name": "Rekt", "kind": "sticky"},
-                {"name": "Rekt", "tags": 1},
-            ],
-        },
-    },
-    "order": ["Umbra", "Nick", "Jackson"],
-}
-
-
 #
 # Processing helpers
 #
