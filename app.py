@@ -18,6 +18,7 @@ async def index() -> dict:
 
 @litestar.post("/commands")
 async def issue_command(data: dict) -> dict:
+    print(data)
     key = insert_command(data)
     try:
         return _ok(wait_for_result(key))
@@ -48,8 +49,8 @@ async def get_entity(name: str) -> dict:
         return _ok(entity)
 
 
-@litestar.put("/entity/{name:str}")
-async def put_entity(data: dict) -> dict:
+@litestar.post("/entity/{name:str}")
+async def post_entity(data: dict) -> dict:
     cmd = {"command": "set_entity", "entity_value": data}
     key = insert_command(cmd)
     try:
@@ -64,6 +65,6 @@ routes = [
     get_checkpoint,
     get_game,
     get_entity,
-    put_entity,
+    post_entity,
 ]
 app = litestar.Litestar(routes)

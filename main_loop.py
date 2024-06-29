@@ -98,11 +98,6 @@ def _set_entity(game, cmd):
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
-    if name in entities:
-        return _error(
-            list(entities.keys()),
-            f"Entity {name} already exists!",
-        )
     entities[name] = entity_value
     return _ok(entities[name])
 
@@ -250,7 +245,8 @@ def _clear_consequences(game, cmd):
             f"Invalid severity: {sev}"
         )
 
-    aspects_to_keep = severities[:last_sev_idx+2]
+    aspects_to_keep = severities[last_sev_idx+1:]
+    print(f"{sev=} {last_sev_idx=} {aspects_to_keep=}")
 
     if "entities" not in g:
         g["entities"] = {}
@@ -269,12 +265,12 @@ def _clear_consequences(game, cmd):
 def _add_stress(game, cmd):
     g = game["data"]
     stress_kind = cmd["stress"]
-    box = cmd["box"]
+    box = int(cmd["box"])
     entity = cmd["entity"]
     e = get_path(g, ["entities", entity])
     s = get_path(e, ["stress", stress_kind], default=None)
     if s is None:
-        return _error(e, f"Entity {entity} has no stress track {stress_kind}")
+        return _error(e, f"Entity {entity} has no {stress_kind} stress track")
     if box > s["max"]:
         return _error(
             e,
@@ -287,8 +283,8 @@ def _add_stress(game, cmd):
         return _error(
             e,
             (
-                f"Entity {entity} already has the {box} "
-                f"{stress_kind} stress checked"
+                f"Entity {entity} has already used the {box} "
+                f"{stress_kind} stress box"
             ),
         )
     # Otherwise
@@ -300,7 +296,7 @@ def _add_stress(game, cmd):
 def _clear_stress_box(game, cmd):
     g = game["data"]
     stress_kind = cmd["stress"]
-    box = cmd["box"]
+    box = int(cmd["box"])
     entity = cmd["entity"]
     e = get_path(g, ["entities", entity])
     s = get_path(e, ["stress", stress_kind], default=None)
@@ -336,7 +332,7 @@ def _clear_all_stress(game, cmd):
     for entity in entities:
         e = entities[entity]
         for s in e["stress"]:
-            e[s]["checked"] = []
+            e["stress"][s]["checked"] = []
     return _ok(entities)
 
 
