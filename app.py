@@ -50,7 +50,7 @@ async def get_entity(name: str) -> dict:
 
 
 @litestar.post("/entity/{name:str}")
-async def post_entity(data: dict) -> dict:
+async def post_entity(name: str, data: dict) -> dict:
     cmd = {"command": "set_entity", "entity_value": data}
     key = insert_command(cmd)
     try:
