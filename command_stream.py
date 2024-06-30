@@ -56,7 +56,7 @@ def wait_for_result(key):
         _read_result,
         _is_ready,
         interval=1,
-        max_time=9,
+        max_time=5,
     )
 
     return read_result(key)
