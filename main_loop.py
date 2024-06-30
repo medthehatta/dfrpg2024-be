@@ -336,19 +336,32 @@ def _clear_all_stress(game, cmd):
     return _ok(entities)
 
 
+def _default_order():
+    default_order = {
+        "entities": [],
+        "bonuses": {},
+        "order": [],
+        "current": None,
+        "deferred": [],
+    }
+    return {
+        k: (v.copy() if hasattr(v, "copy") else v)
+        for (k, v) in default_order.items()
+    }
+
+
+def _ensure_order(g):
+    if "order" not in g:
+        g["order"] = _default_order()
+
+
 @cmds.register("order_add")
 def _order_add(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
     bonus = int(cmd["bonus"])
     e = get_path(g, ["entities", entity])
-    if "order" not in g:
-        g["order"] = {
-            "entities": [],
-            "bonuses": {},
-            "order": [],
-            "current": None,
-        }
+    _ensure_order(g)
     g["order"]["entities"] = list(
         set(g["order"]["entities"]).union({entity})
     )
@@ -359,16 +372,10 @@ def _order_add(game, cmd):
 @cmds.register("next")
 def _next(game, cmd):
     g = game["data"]
-    if "order" not in g:
-        g["order"] = {
-            "entities": [],
-            "bonuses": {},
-            "order": [],
-            "current": None,
-        }
+    _ensure_order(g)
     if g["order"]["current"] is not None and g["order"]["order"]:
         g["order"]["current"] = (
-            (g["order"]["current"] + 1) % len(g["order"]["entities"])
+            (g["order"]["current"] + 1) % len(g["order"]["order"])
         )
     return _ok(g["order"])
 
@@ -376,16 +383,10 @@ def _next(game, cmd):
 @cmds.register("back")
 def _back(game, cmd):
     g = game["data"]
-    if "order" not in g:
-        g["order"] = {
-            "entities": [],
-            "bonuses": {},
-            "order": [],
-            "current": None,
-        }
+    _ensure_order(g)
     if g["order"]["current"] is not None and g["order"]["order"]:
         g["order"]["current"] = (
-            (g["order"]["current"] - 1) % len(g["order"]["entities"])
+            (g["order"]["current"] - 1) % len(g["order"]["order"])
         )
     return _ok(g["order"])
 
@@ -394,13 +395,7 @@ def _back(game, cmd):
 def _drop_from_order(game, cmd):
     g = game["data"]
     entity = cmd.get("entity")
-    if "order" not in g:
-        g["order"] = {
-            "entities": [],
-            "bonuses": {},
-            "order": [],
-            "current": None,
-        }
+    _ensure_order(g)
     if g["order"]["current"] is not None and g["order"]["order"]:
         if not entity:
             current = g["order"]["current"]
@@ -408,7 +403,45 @@ def _drop_from_order(game, cmd):
         g["order"]["entities"].remove(entity)
         g["order"]["order"].remove(entity)
         g["order"]["current"] = (
-            g["order"]["current"] % len(g["order"]["entities"])
+            g["order"]["current"] % len(g["order"]["order"])
+        )
+    return _ok(g["order"])
+
+
+@cmds.register("defer")
+def _order_defer(game, cmd):
+    g = game["data"]
+    _ensure_order(g)
+    if len(g["order"]["order"]) <= 1:
+        return _error(
+            g["order"],
+            f"Can't defer, or nobody will be in the turn order!",
+        )
+    if g["order"]["current"] is not None and g["order"]["order"]:
+        current = g["order"]["current"]
+        active = g["order"]["order"][current]
+        g["order"]["deferred"].append(active)
+        g["order"]["order"].remove(active)
+        g["order"]["current"] = (
+            g["order"]["current"] % len(g["order"]["order"])
+        )
+    return _ok(g["order"])
+
+
+@cmds.register("undefer")
+def _order_undefer(game, cmd):
+    g = game["data"]
+    _ensure_order(g)
+    entity = cmd.get("entity")
+    if entity not in g["order"]["deferred"]:
+        return _error(g["order"], f"Entity '{entity}' has not deferred")
+
+    if g["order"]["current"] is not None and g["order"]["order"]:
+        current = g["order"]["current"]
+        g["order"]["order"].insert(current, entity)
+        g["order"]["deferred"].remove(entity)
+        g["order"]["current"] = (
+            g["order"]["current"] % len(g["order"]["order"])
         )
     return _ok(g["order"])
 
@@ -416,13 +449,7 @@ def _drop_from_order(game, cmd):
 @cmds.register("start_order")
 def _start_order(game, cmd):
     g = game["data"]
-    if "order" not in g:
-        g["order"] = {
-            "entities": [],
-            "bonuses": {},
-            "order": [],
-            "current": None,
-        }
+    _ensure_order(g)
     g["order"]["order"] = sorted(
         g["order"]["entities"],
         key=lambda x: g["order"]["bonuses"].get(x, 0),
@@ -435,12 +462,7 @@ def _start_order(game, cmd):
 @cmds.register("clear_order")
 def _clear_order(game, cmd):
     g = game["data"]
-    g["order"] = {
-        "entities": [],
-        "bonuses": {},
-        "order": [],
-        "current": None,
-    }
+    g["order"] = _default_order()
     return _ok(g["order"])
 
 
