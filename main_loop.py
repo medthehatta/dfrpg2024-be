@@ -377,6 +377,8 @@ def _next(game, cmd):
         g["order"]["current"] = (
             (g["order"]["current"] + 1) % len(g["order"]["order"])
         )
+    else:
+        _start_order(game, {})
     return _ok(g["order"])
 
 
@@ -388,6 +390,8 @@ def _back(game, cmd):
         g["order"]["current"] = (
             (g["order"]["current"] - 1) % len(g["order"]["order"])
         )
+    else:
+        _start_order(game, {})
     return _ok(g["order"])
 
 
