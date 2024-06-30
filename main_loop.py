@@ -336,6 +336,74 @@ def _clear_all_stress(game, cmd):
     return _ok(entities)
 
 
+@cmds.register("order_add")
+def _order_add(game, cmd):
+    g = game["data"]
+    entity = cmd["entity"]
+    bonus = int(cmd["bonus"])
+    e = get_path(g, ["entities", entity])
+    if "order" not in g:
+        g["order"] = {
+            "entities": [],
+            "bonuses": {},
+            "order": [],
+            "current": None,
+        }
+    g["order"]["entities"] = list(
+        set(g["order"]["entities"]).union({entity})
+    )
+    g["order"]["bonuses"][entity] = bonus
+    return _ok(g["order"])
+
+
+@cmds.register("next")
+def _next(game, cmd):
+    g = game["data"]
+    if "order" not in g:
+        g["order"] = {
+            "entities": [],
+            "bonuses": {},
+            "order": [],
+            "current": None,
+        }
+    if g["order"]["current"] is not None and g["order"]["order"]:
+        g["order"]["current"] = (
+            (g["order"]["current"] + 1) % len(g["order"]["entities"])
+        )
+    return _ok(g["order"])
+
+
+@cmds.register("start_order")
+def _start_order(game, cmd):
+    g = game["data"]
+    if "order" not in g:
+        g["order"] = {
+            "entities": [],
+            "bonuses": {},
+            "order": [],
+            "current": None,
+        }
+    g["order"]["order"] = sorted(
+        g["order"]["entities"],
+        key=lambda x: g["order"]["bonuses"].get(x, 0),
+        reverse=True,
+    )
+    g["order"]["current"] = 0
+    return _ok(g["order"])
+
+
+@cmds.register("clear_order")
+def _clear_order(game, cmd):
+    g = game["data"]
+    g["order"] = {
+        "entities": [],
+        "bonuses": {},
+        "order": [],
+        "current": None,
+    }
+    return _ok(g["order"])
+
+
 @cmds.register("test")
 def _test(game, cmd):
     return _ok(cmd.get("string", "foo"))
