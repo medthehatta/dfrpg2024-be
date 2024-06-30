@@ -373,6 +373,46 @@ def _next(game, cmd):
     return _ok(g["order"])
 
 
+@cmds.register("back")
+def _back(game, cmd):
+    g = game["data"]
+    if "order" not in g:
+        g["order"] = {
+            "entities": [],
+            "bonuses": {},
+            "order": [],
+            "current": None,
+        }
+    if g["order"]["current"] is not None and g["order"]["order"]:
+        g["order"]["current"] = (
+            (g["order"]["current"] - 1) % len(g["order"]["entities"])
+        )
+    return _ok(g["order"])
+
+
+@cmds.register("drop_from_order")
+def _drop_from_order(game, cmd):
+    g = game["data"]
+    entity = cmd.get("entity")
+    if "order" not in g:
+        g["order"] = {
+            "entities": [],
+            "bonuses": {},
+            "order": [],
+            "current": None,
+        }
+    if g["order"]["current"] is not None and g["order"]["order"]:
+        if not entity:
+            current = g["order"]["current"]
+            entity = g["order"]["order"][current]
+        g["order"]["entities"].remove(entity)
+        g["order"]["order"].remove(entity)
+        g["order"]["current"] = (
+            g["order"]["current"] % len(g["order"]["entities"])
+        )
+    return _ok(g["order"])
+
+
 @cmds.register("start_order")
 def _start_order(game, cmd):
     g = game["data"]

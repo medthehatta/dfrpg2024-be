@@ -32,17 +32,23 @@ def set_checkpoint(value):
 
 def checkpoint_data():
     current = get_checkpoint()
-    listing = sorted(glob.glob("db-save-*.json"))
-    mtimes = [os.path.getmtime(p) for p in listing]
+    globs = glob.glob("db-save-*.json")
+    mtimes = [os.path.getmtime(p) for p in globs]
+    listing = [
+        {
+            "path": int(re.search(r'db-save-(\d+).json', path).group(1)),
+            "mtime": datetime.datetime.fromtimestamp(mtime).isoformat(),
+            "size": os.path.getsize(path),
+        }
+        for (path, mtime) in zip(globs, mtimes)
+    ]
     return {
         "current": current,
-        "listing": [
-            {
-                "path": int(re.search(r'db-save-(\d+).json', path).group(1)),
-                "mtime": datetime.datetime.fromtimestamp(mtime).isoformat(),
-            }
-            for (path, mtime) in zip(listing, mtimes)
-        ],
+        "listing": sorted(
+            listing,
+            key=lambda x: x["mtime"],
+            reverse=True,
+        ),
     }
 
 

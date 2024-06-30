@@ -26,8 +26,8 @@ async def issue_command(data: dict) -> dict:
         return _exception(err)
 
 
-@litestar.get("/checkpoint")
-async def get_checkpoint() -> dict:
+@litestar.get("/checkpoints")
+async def get_checkpoints() -> dict:
     return _ok(database.checkpoint_data())
 
 
@@ -62,7 +62,7 @@ async def post_entity(name: str, data: dict) -> dict:
 routes = [
     index,
     issue_command,
-    get_checkpoint,
+    get_checkpoints,
     get_game,
     get_entity,
     post_entity,
