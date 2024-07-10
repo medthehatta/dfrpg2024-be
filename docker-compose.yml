@@ -1,6 +1,3 @@
-# Copyright Broadcom, Inc. All Rights Reserved.
-# SPDX-License-Identifier: APACHE-2.0
-
 version: '2'
 
 services:
@@ -9,8 +6,6 @@ services:
     environment:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-    ports:
-      - '6379:6379'
     volumes:
       - 'redis_data:/bitnami/redis/data'
 
@@ -20,6 +15,10 @@ services:
       context: .
       dockerfile: Dockerfile.web
     environment:
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6501:80"
       - REDIS_PASSWORD=${REDIS_PASSWORD}
 
 volumes:
