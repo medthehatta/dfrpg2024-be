@@ -1,0 +1,7 @@
+FROM python:3.12-slim-bullseye
+WORKDIR /app
+COPY requirements.txt /app/
+COPY app.py command_stream.py database.py db_redis.py errors.py main_loop.py scratch.py sock.py utils.py /app/
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+EXPOSE 80
+CMD ["litestar", "run", "--host", "0.0.0.0", "--port", "80"]

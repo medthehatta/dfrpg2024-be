@@ -5,16 +5,22 @@ version: '2'
 
 services:
   redis:
-    image: docker.io/bitnami/redis:7.2
+    image: docker.io/bitnami/redis:6.2.6
     environment:
-      # DEVELOPMENT
-      - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
       - '6379:6379'
     volumes:
       - 'redis_data:/bitnami/redis/data'
+
+  web:
+    image: dfrpg2024-be-web
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
 
 volumes:
   redis_data:
