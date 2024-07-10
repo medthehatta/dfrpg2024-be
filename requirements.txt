@@ -1,3 +1,5 @@
 litestar
 uvicorn
 redis
+asyncio
+asyncio-timeout
