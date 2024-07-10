@@ -72,8 +72,14 @@ def read():
     if k == 0:
         return {}
 
-    with open(f"db-save-{k}.json", "r") as f:
-        return json.load(f)
+    try:
+        with open(f"db-save-{k}.json", "r") as f:
+            return json.load(f)
+
+    except FileNotFoundError:
+        default = {}
+        write(default)
+        return {}
 
 
 # This is ok because there will only be one process allowed to write
