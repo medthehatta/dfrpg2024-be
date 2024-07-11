@@ -77,9 +77,19 @@ def read():
             return json.load(f)
 
     except FileNotFoundError:
-        default = {}
-        write(default)
-        return {}
+        print(
+            f"Unable to find checkpoint {k}.  Using latest checkpoint..."
+        )
+        checkpoints = checkpoint_data()
+        if checkpoints["listing"]:
+            k = checkpoints["listing"][0]["path"]
+            with open("db-save-{k}.json", "r") as h:
+                return json.load(h)
+        else:
+            print("No checkpoints found.  Resetting.")
+            redis.set(checkpoint, 1)
+            write({})
+            return {}
 
 
 # This is ok because there will only be one process allowed to write
