@@ -60,7 +60,7 @@ async def post_entity(name: str, data: dict) -> dict:
 
 
 @litestar.post("/entity")
-async def post_entity(data: dict) -> dict:
+async def create_entity(data: dict) -> dict:
     cmd = {"command": "create_entity", **data}
     key = insert_command(cmd)
     try:
@@ -76,5 +76,6 @@ routes = [
     get_game,
     get_entity,
     post_entity,
+    create_entity,
 ]
 app = litestar.Litestar(routes)
