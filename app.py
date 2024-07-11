@@ -33,7 +33,11 @@ async def get_checkpoints() -> dict:
 
 @litestar.get("/game")
 async def get_game() -> dict:
-    return _ok(database.read())
+    try:
+        result = database.read()
+        return _ok(result)
+    except Exception as err:
+        return _exception(err)
 
 
 @litestar.get("/entity/{name:str}")
