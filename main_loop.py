@@ -206,6 +206,33 @@ def _remove_aspect(game, cmd):
         )
 
 
+@cmds.register("tag_aspect")
+def _tag_aspect(game, cmd):
+    g = game["data"]
+    entity = cmd["entity"]
+    aspect_name = cmd["name"]
+    e = get_path(g, ["entities", entity])
+    current_names = [a["name"] for a in e.get("aspects", [])]
+    if aspect_name in current_names:
+        aspect = next(
+            a for a in e.get("aspects", []) if a["name"] == aspect_name
+        )
+        if aspect["tags"] > 0:
+            aspect["tags"] -= 1
+            return _ok(e)
+        else:
+            return _error(
+                e["aspects"],
+                f"Aspect '{aspect_name}' on '{entity}' has no free tags",
+            )
+
+    else:
+        return _error(
+            e["aspects"],
+            f"No aspect '{aspect_name}' present on '{entity}'",
+        )
+
+
 @cmds.register("remove_all_temporary_aspects")
 def _remove_all_temp_aspects(game, cmd):
     g = game["data"]
