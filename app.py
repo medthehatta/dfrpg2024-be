@@ -59,6 +59,16 @@ async def post_entity(name: str, data: dict) -> dict:
         return _exception(err)
 
 
+@litestar.post("/entity")
+async def post_entity(data: dict) -> dict:
+    cmd = {"command": "create_entity", **data}
+    key = insert_command(cmd)
+    try:
+        return _ok(wait_for_result(key))
+    except Exception as err:
+        return _exception(err)
+
+
 routes = [
     index,
     issue_command,
