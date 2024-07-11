@@ -83,7 +83,7 @@ def read():
         checkpoints = checkpoint_data()
         if checkpoints["listing"]:
             k = checkpoints["listing"][0]["path"]
-            with open("db-save-{k}.json", "r") as h:
+            with open(f"db-save-{k}.json", "r") as h:
                 return json.load(h)
         else:
             print("No checkpoints found.  Resetting.")
