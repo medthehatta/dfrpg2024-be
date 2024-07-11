@@ -491,7 +491,6 @@ def commands_incoming():
 def populate():
     with editing() as game:
         for (_, command) in read_command_log():
-            print(game)
             res = process_command(game, command, entry_id=None)
             print(f"populate | {command} | {res}")
 
