@@ -25,28 +25,21 @@ def incr_checkpoint():
 def set_checkpoint(value):
     if value >= keep:
         raise ValueError(f"Invalid: {value} exceeds keep {keep}")
-    if not os.path.exists(f"db-save-{value}.json"):
+    if not redis.get(f"db-save-{value}"):
         raise ValueError(f"Invalid: {value} is not persisted")
     return redis.set(checkpoint, value)
 
 
 def checkpoint_data():
     current = get_checkpoint()
-    globs = glob.glob("db-save-*.json")
-    mtimes = [os.path.getmtime(p) for p in globs]
-    listing = [
-        {
-            "path": int(re.search(r'db-save-(\d+).json', path).group(1)),
-            "mtime": datetime.datetime.fromtimestamp(mtime).isoformat(),
-            "size": os.path.getsize(path),
-        }
-        for (path, mtime) in zip(globs, mtimes)
-    ]
+    listing = list(
+        redis.scan_iter(match="db-save-*")
+    )
     return {
         "current": current,
         "listing": sorted(
             listing,
-            key=lambda x: x["mtime"],
+            key=lambda x: redis.get(f"x:timestamp") or -1,
             reverse=True,
         ),
     }
@@ -72,32 +65,13 @@ def read():
     if k == 0:
         return {}
 
-    try:
-        with open(f"db-save-{k}.json", "r") as f:
-            return json.load(f)
+    return json.loads(redis.get(f"db-save-{k}") or "{}")
 
-    except FileNotFoundError:
-        print(
-            f"Unable to find checkpoint {k}.  Using latest checkpoint..."
-        )
-        checkpoints = checkpoint_data()
-        if checkpoints["listing"]:
-            k = checkpoints["listing"][0]["path"]
-            with open(f"db-save-{k}.json", "r") as h:
-                return json.load(h)
-        else:
-            print("No checkpoints found.  Resetting.")
-            redis.set(checkpoint, 1)
-            write({})
-            return {}
-
-
-# This is ok because there will only be one process allowed to write
 
 def write(data):
     with incrementing_checkpoint() as k:
-        with open(f"db-save-{k}.json", "w") as f:
-            json.dump(data, f)
+        redis.set(f"db-save-{k}", json.dumps(data))
+        redis.set(f"db-save-{k}:timestamp", datetime.datetime.now().timestamp())
 
 
 @contextmanager
