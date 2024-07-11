@@ -70,8 +70,9 @@ def process_command(game, cmd, entry_id=None):
 def _create_entity(game, cmd):
     g = game["data"]
     name = cmd["name"]
-    maxes = cmd["stress_maxes"]
-    refresh = cmd["refresh"]
+    maxes = cmd.get("stress_maxes") or {}
+    refresh = cmd.get("refresh") or 0
+    fate = cmd.get("fate") or 0
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
@@ -82,7 +83,7 @@ def _create_entity(game, cmd):
         )
     entities[name] = {
         "name": name,
-        "fate": 0,
+        "fate": fate,
         "refresh": refresh,
         "aspects": [],
         "stress": {k: {"checked": [], "max": m} for (k, m) in maxes.items()},
