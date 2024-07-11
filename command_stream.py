@@ -7,7 +7,6 @@ from utils import query_eventually
 
 
 RESULT_TTL = 3600
-NOT_READY = "__NOT__READY__"
 command_stream = "commands"
 
 
@@ -26,12 +25,11 @@ def read_command_log():
 
 
 def insert_command(command):
-    added = redis.xadd(command_stream, {"data": json.dumps(command)})
-    store_result(NOT_READY, added)
-    return added
+    return redis.xadd(command_stream, {"data": json.dumps(command)})
 
 
 def store_result(data, key):
+    print(f"Saving data to {key}: {data}", flush=True)
     redis.set(key, json.dumps(data))
     redis.expire(key, RESULT_TTL)
 
@@ -50,7 +48,7 @@ def wait_for_result(key):
         return read_result(key)
 
     def _is_ready(result):
-        return result not in [None, NOT_READY]
+        return result is not None
 
     query_eventually(
         _read_result,
