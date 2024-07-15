@@ -360,6 +360,10 @@ def _clear_stress_box(game, cmd):
 
 @cmds.register("clear_all_stress")
 def _clear_all_stress(game, cmd):
+    # Stress tracks that do not get auto-cleared
+    do_not_clear = [
+        "hunger",
+    ]
     g = game["data"]
     if "entities" not in g:
         g["entities"] = {}
@@ -367,6 +371,8 @@ def _clear_all_stress(game, cmd):
     for entity in entities:
         e = entities[entity]
         for s in e["stress"]:
+            if s in do_not_clear:
+                continue
             e["stress"][s]["checked"] = []
     return _ok(entities)
 
