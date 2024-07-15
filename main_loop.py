@@ -125,15 +125,16 @@ def _remove_entity(game, cmd):
 def _decrement_fp(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
+    amount = int(cmd.get("amount") or 1)
     e = get_path(g, ["entities", entity])
     fp = e["fate"]
-    if fp >= 1:
-        e["fate"] -= 1
+    if fp >= amount:
+        e["fate"] -= amount
         return _ok(e)
     else:
         return _error(
             e,
-            "Not enough FP to decrement",
+            f"Only {fp} FP: not enough FP to decrement by {amount}",
         )
 
 
@@ -141,8 +142,9 @@ def _decrement_fp(game, cmd):
 def _increment_fp(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
+    amount = int(cmd.get("amount") or 1)
     e = get_path(g, ["entities", entity])
-    e["fate"] += 1
+    e["fate"] += amount
     return _ok(e)
 
 
@@ -180,7 +182,7 @@ def _add_aspect(game, cmd):
         aspect["tags"] = cmd["tags"]
     e = get_path(g, ["entities", entity])
     existing = [a["name"].lower() for a in e["aspects"]]
-    if aspect.lower() in existing:
+    if aspect["name"].lower() in existing:
         return _error(
             existing,
             f"Aspect {aspect} already present on {entity}",
