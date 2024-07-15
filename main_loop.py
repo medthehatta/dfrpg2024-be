@@ -1,5 +1,6 @@
 import json
 from functools import wraps
+import random
 
 from command_stream import wait_for_commands
 from command_stream import read_command_log
@@ -484,7 +485,7 @@ def _start_order(game, cmd):
     _ensure_order(g)
     g["order"]["order"] = sorted(
         g["order"]["entities"],
-        key=lambda x: g["order"]["bonuses"].get(x, 0),
+        key=lambda x: (g["order"]["bonuses"].get(x, 0), random.random()),
         reverse=True,
     )
     g["order"]["current"] = 0
