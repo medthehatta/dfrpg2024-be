@@ -179,8 +179,8 @@ def _add_aspect(game, cmd):
     if "tags" in cmd:
         aspect["tags"] = cmd["tags"]
     e = get_path(g, ["entities", entity])
-    existing = [a["name"] for a in e["aspects"]]
-    if aspect in existing:
+    existing = [a["name"].lower() for a in e["aspects"]]
+    if aspect.lower() in existing:
         return _error(
             existing,
             f"Aspect {aspect} already present on {entity}",
@@ -196,9 +196,12 @@ def _remove_aspect(game, cmd):
     entity = cmd["entity"]
     aspect_name = cmd["name"]
     e = get_path(g, ["entities", entity])
-    current_names = [a["name"] for a in e.get("aspects", [])]
-    if aspect_name in current_names:
-        e["aspects"] = [a for a in e.get("aspects", []) if a["name"] != aspect_name]
+    current_names = [a["name"].lower() for a in e.get("aspects", [])]
+    if aspect_name.lower() in current_names:
+        e["aspects"] = [
+            a for a in e.get("aspects", [])
+            if a["name"].lower() != aspect_name.lower()
+        ]
         return _ok(e)
     else:
         return _error(
@@ -213,10 +216,11 @@ def _tag_aspect(game, cmd):
     entity = cmd["entity"]
     aspect_name = cmd["name"]
     e = get_path(g, ["entities", entity])
-    current_names = [a["name"] for a in e.get("aspects", [])]
-    if aspect_name in current_names:
+    current_names = [a["name"].lower() for a in e.get("aspects", [])]
+    if aspect_name.lower() in current_names:
         aspect = next(
-            a for a in e.get("aspects", []) if a["name"] == aspect_name
+            a for a in e.get("aspects", [])
+            if a["name"].lower() == aspect_name.lower()
         )
         if aspect["tags"] > 0:
             aspect["tags"] -= 1
