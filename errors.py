@@ -14,7 +14,7 @@ def _exception(exception):
         "ok": False,
         "error": "Unhandled exception",
         "exception": exception.__class__.__name__,
-        "description": str(exception.args[0]),
+        "description": str(exception.args[0] if exception.args else exception),
         "traceback": exc_info,
     }
 

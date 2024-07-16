@@ -362,6 +362,52 @@ def _add_stress(game, cmd):
     return _ok(e)
 
 
+def _absorb(available, amount):
+    if amount <= 0:
+        return []
+
+    if sum(available) < amount:
+        raise ValueError(available)
+
+    try:
+        value = max(x for x in available if x <= amount)
+        return [value] + _absorb([x for x in available if x < value], amount - value)
+
+    except ValueError:
+        value = min(x for x in available if x >= amount)
+        return [value] + _absorb([x for x in available if x != value], amount - value)
+
+
+@cmds.register("absorb_stress")
+def _absorb_stress(game, cmd):
+    g = game["data"]
+    stress_kind = cmd["stress"]
+    amount = int(cmd["amount"])
+    entity = cmd["entity"]
+    e = get_path(g, ["entities", entity])
+    s = get_path(e, ["stress", stress_kind], default=None)
+    if s is None:
+        return _error(e, f"Entity {entity} has no {stress_kind} stress track")
+    available = [
+        box for box in range(1, s["max"]+1) if box not in s["checked"]
+    ]
+
+    try:
+        result = _absorb(available, amount)
+        s["checked"].extend(result)
+        return _ok(e)
+
+    except ValueError:
+        return _error(
+            e,
+            (
+                f"Entity {entity} unable to absorb "
+                f"{amount} {stress_kind} stress with their available "
+                f"stress boxes: {available}"
+            ),
+        )
+
+
 @cmds.register("clear_stress_box")
 def _clear_stress_box(game, cmd):
     g = game["data"]
