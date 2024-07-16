@@ -261,7 +261,7 @@ def _remove_all_temp_aspects(game, cmd):
     return _ok(g["entities"])
 
 
-@cmds.register("clear_consequences")
+@cmds.register("clear_all_consequences")
 def _clear_consequences(game, cmd):
     g = game["data"]
     severities = [
@@ -294,6 +294,41 @@ def _clear_consequences(game, cmd):
         ]
 
     return _ok(g["entities"])
+
+
+@cmds.register("clear_consequences")
+def _clear_consequences(game, cmd):
+    g = game["data"]
+    severities = [
+        "mild",
+        "moderate",
+        "severe",
+        "extreme",
+    ]
+    sev = cmd["max_severity"]
+    entity = cmd["entity"]
+    e = get_path(g, ["entities", entity])
+
+    try:
+        last_sev_idx = severities.index(sev)
+    except ValueError:
+        return _error(
+            severities,
+            f"Invalid severity: {sev}"
+        )
+
+    aspects_to_keep = severities[last_sev_idx+1:]
+    print(f"{sev=} {last_sev_idx=} {aspects_to_keep=}")
+
+    if "entities" not in g:
+        g["entities"] = {}
+
+    e["aspects"] = [
+        a for a in e.get("aspects", [])
+        if a.get("kind") in aspects_to_keep
+    ]
+
+    return _ok(e)
 
 
 @cmds.register("add_stress")
