@@ -71,3 +71,42 @@ def query_eventually(
         )
 
 
+def flat_diff(struct1, struct2):
+    s1 = {k: v for (k, v) in _flatten_struct(struct1)}
+    s2 = {k: v for (k, v) in _flatten_struct(struct2)}
+
+    all_keys = set(list(s1.keys()) + list(s2.keys()))
+    for k in all_keys:
+
+        if k in s1 and k not in s2:
+            yield ("delete", k, s1[k])
+
+        elif k not in s1 and k in s2:
+            yield ("insert", k, s2[k])
+
+        elif s1[k] != s2[k]:
+            yield ("edit", k, s1[k], s2[k])
+
+
+def _flatten_struct(struct, path=None):
+    path = path or []
+    if isinstance(struct, dict):
+        return sum(
+            [
+                _flatten_struct(struct[k], tuple(list(path) + [k]))
+                for k in struct
+            ],
+            [],
+        )
+    elif isinstance(struct, (list, tuple)):
+        return sum(
+            [
+                _flatten_struct(struct[i], tuple(list(path) + [i]))
+                for i in range(len(struct))
+            ],
+            [],
+        )
+    else:
+        return [(path, struct)]
+
+

@@ -9,6 +9,7 @@ from errors import _exception
 from errors import _fail
 from errors import _error
 from utils import get_path
+from utils import flat_diff
 
 
 @litestar.get("/")
@@ -34,6 +35,26 @@ async def get_checkpoints() -> dict:
 @litestar.get("/checkpoint/{id_:int}")
 async def get_checkpoint(id_: int) -> dict:
     return _ok(database.read(id_))
+
+
+@litestar.get("/checkpoint/{id_:int}/diff")
+async def get_checkpoint_diff(id_: int) -> dict:
+    previous = database.read(database.roll(id_, -1))
+    current = database.read(id_)
+    diffed = list(flat_diff(previous, current))
+    result = {
+        "insertions": [
+            (x, a) for (op, x, a, *bs) in diffed if op == "insert"
+        ],
+        "deletions": [
+            (x, a) for (op, x, a, *bs) in diffed if op == "delete"
+        ],
+        "changes": [
+            (x, a, bs[0]) for (op, x, a, *bs) in diffed if op == "edit"
+        ],
+    }
+
+    return _ok(result)
 
 
 @litestar.get("/game")
@@ -83,6 +104,7 @@ routes = [
     issue_command,
     get_checkpoints,
     get_checkpoint,
+    get_checkpoint_diff,
     get_game,
     get_entity,
     post_entity,
