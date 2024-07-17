@@ -31,6 +31,11 @@ async def get_checkpoints() -> dict:
     return _ok(database.checkpoint_data())
 
 
+@litestar.get("/checkpoint/{id_:int}")
+async def get_checkpoint(id_: int) -> dict:
+    return _ok(database.read(id_))
+
+
 @litestar.get("/game")
 async def get_game() -> dict:
     try:
@@ -77,6 +82,7 @@ routes = [
     index,
     issue_command,
     get_checkpoints,
+    get_checkpoint,
     get_game,
     get_entity,
     post_entity,

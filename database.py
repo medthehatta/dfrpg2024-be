@@ -16,8 +16,12 @@ def get_checkpoint():
     return int(redis.get(checkpoint) or 0)
 
 
+def roll(k, amount):
+    return (k + amount) % keep
+
+
 def incr_checkpoint():
-    new = (get_checkpoint() + 1) % keep
+    new = roll(get_checkpoint(), 1)
     redis.set(checkpoint, new)
     return new
 
@@ -35,20 +39,21 @@ def checkpoint_data():
     listing = list(
         redis.scan_iter(match="db-save-*")
     )
+    by_time = sorted(
+        listing,
+        key=lambda x: redis.get(f"ts:{x}") or -1,
+        reverse=True,
+    )
     return {
         "current": current,
-        "listing": sorted(
-            listing,
-            key=lambda x: redis.get(f"ts:{x}") or -1,
-            reverse=True,
-        ),
+        "listing": [int(x.replace("db-save-", "")) for x in by_time],
     }
 
 
 @contextmanager
 def incrementing_checkpoint():
     initial = get_checkpoint()
-    new = (initial + 1) % keep
+    new = roll(initial, 1)
     try:
         yield new
 
@@ -60,8 +65,8 @@ def incrementing_checkpoint():
         return new
 
 
-def read():
-    k = get_checkpoint()
+def read(k=None):
+    k = k or get_checkpoint()
     if k == 0:
         return {}
 
@@ -70,8 +75,15 @@ def read():
 
 def write(data):
     with incrementing_checkpoint() as k:
-        redis.set(f"db-save-{k}", json.dumps(data))
-        redis.set(f"ts:db-save-{k}", datetime.datetime.now().timestamp())
+        current = read(roll(k, -1))
+        if current != data:
+            redis.set(f"db-save-{k}", json.dumps(data))
+            redis.set(f"ts:db-save-{k}", datetime.datetime.now().timestamp())
+        else:
+            print(
+                f"Skipping commit of checkpoint {k} as there is no change "
+                f"to the state."
+            )
 
 
 @contextmanager
