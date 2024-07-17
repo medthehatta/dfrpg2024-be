@@ -39,7 +39,7 @@ def checkpoint_data():
         "current": current,
         "listing": sorted(
             listing,
-            key=lambda x: redis.get(f"x:timestamp") or -1,
+            key=lambda x: redis.get(f"ts:{x}") or -1,
             reverse=True,
         ),
     }
@@ -71,7 +71,7 @@ def read():
 def write(data):
     with incrementing_checkpoint() as k:
         redis.set(f"db-save-{k}", json.dumps(data))
-        redis.set(f"db-save-{k}:timestamp", datetime.datetime.now().timestamp())
+        redis.set(f"ts:db-save-{k}", datetime.datetime.now().timestamp())
 
 
 @contextmanager

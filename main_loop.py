@@ -103,7 +103,6 @@ def _edit_entity(game, cmd):
     maxes = cmd.get("stress_maxes")
     refresh = cmd.get("refresh")
     fate = cmd.get("fate")
-    print(f"EDIT {cmd}")
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
