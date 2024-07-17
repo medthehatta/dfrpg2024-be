@@ -24,7 +24,7 @@ class CommandRegistrar:
     def __init__(self):
         self.commands = {}
 
-    def register(self, *names, no_implicit_edit=False):
+    def register(self, *names):
 
         def _register(func):
             for name in names:
@@ -33,11 +33,6 @@ class CommandRegistrar:
             @wraps(func)
             def _a(*args, **kwargs):
                 return func(*args, **kwargs)
-
-            if no_implicit_edit:
-                print(f"{func} has no implicit edit")
-                func.__no_implicit_edit = True
-                _a.__no_implicit_edit = True
 
             return _a
 
@@ -50,19 +45,26 @@ class CommandRegistrar:
 cmds = CommandRegistrar()
 
 
+def implicit_edit(func):
+
+    @wraps(func)
+    def _implicit(*args, **kwargs):
+        with database.editing() as game:
+            return func(game, *args, **kwargs)
+
+    return _implicit
+
+
 def process_command(cmd, entry_id=None):
     func = cmds.get(cmd.get("command"))
 
     if func:
         try:
-            if hasattr(func, "__no_implicit_edit"):
-                print(f"Processing {func} with no implicit edit")
-                result = func(cmd)
-            else:
-                with database.editing() as game:
-                    result = func(game, cmd)
+            result = func(cmd)
+
         except Exception as err:
             result = _exception(err)
+
     else:
         result = _error(cmd, "Unrecognized command")
 
@@ -78,6 +80,7 @@ def process_command(cmd, entry_id=None):
 
 
 @cmds.register("create_entity")
+@implicit_edit
 def _create_entity(game, cmd):
     g = game["data"]
     name = cmd["name"]
@@ -107,6 +110,7 @@ def _create_entity(game, cmd):
 
 
 @cmds.register("edit_entity")
+@implicit_edit
 def _edit_entity(game, cmd):
     g = game["data"]
     name = cmd["name"]
@@ -144,6 +148,7 @@ def _edit_entity(game, cmd):
 
 
 @cmds.register("set_entity")
+@implicit_edit
 def _set_entity(game, cmd):
     g = game["data"]
     name = cmd["name"]
@@ -156,6 +161,7 @@ def _set_entity(game, cmd):
 
 
 @cmds.register("remove_entity")
+@implicit_edit
 def _remove_entity(game, cmd):
     g = game["data"]
     name = cmd["entity"]
@@ -173,6 +179,7 @@ def _remove_entity(game, cmd):
 
 
 @cmds.register("decrement_fp")
+@implicit_edit
 def _decrement_fp(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -190,6 +197,7 @@ def _decrement_fp(game, cmd):
 
 
 @cmds.register("increment_fp")
+@implicit_edit
 def _increment_fp(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -200,6 +208,7 @@ def _increment_fp(game, cmd):
 
 
 @cmds.register("set_fp")
+@implicit_edit
 def _set_fp(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -210,6 +219,7 @@ def _set_fp(game, cmd):
 
 
 @cmds.register("refresh_fp")
+@implicit_edit
 def _refresh_fp(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -222,6 +232,8 @@ def _refresh_fp(game, cmd):
 
 
 @cmds.register("add_aspect")
+@implicit_edit
+@implicit_edit
 def _add_aspect(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -244,6 +256,7 @@ def _add_aspect(game, cmd):
 
 
 @cmds.register("remove_aspect")
+@implicit_edit
 def _remove_aspect(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -264,6 +277,7 @@ def _remove_aspect(game, cmd):
 
 
 @cmds.register("tag_aspect")
+@implicit_edit
 def _tag_aspect(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -292,6 +306,7 @@ def _tag_aspect(game, cmd):
 
 
 @cmds.register("remove_all_temporary_aspects")
+@implicit_edit
 def _remove_all_temp_aspects(game, cmd):
     g = game["data"]
     long_aspects = [
@@ -313,6 +328,7 @@ def _remove_all_temp_aspects(game, cmd):
 
 
 @cmds.register("clear_all_consequences")
+@implicit_edit
 def _clear_consequences(game, cmd):
     g = game["data"]
     severities = [
@@ -348,6 +364,7 @@ def _clear_consequences(game, cmd):
 
 
 @cmds.register("clear_consequences")
+@implicit_edit
 def _clear_consequences(game, cmd):
     g = game["data"]
     severities = [
@@ -383,6 +400,7 @@ def _clear_consequences(game, cmd):
 
 
 @cmds.register("add_stress")
+@implicit_edit
 def _add_stress(game, cmd):
     g = game["data"]
     stress_kind = cmd["stress"]
@@ -430,6 +448,7 @@ def _absorb(available, amount):
 
 
 @cmds.register("absorb_stress")
+@implicit_edit
 def _absorb_stress(game, cmd):
     g = game["data"]
     stress_kind = cmd["stress"]
@@ -460,6 +479,7 @@ def _absorb_stress(game, cmd):
 
 
 @cmds.register("clear_stress_box")
+@implicit_edit
 def _clear_stress_box(game, cmd):
     g = game["data"]
     stress_kind = cmd["stress"]
@@ -491,6 +511,7 @@ def _clear_stress_box(game, cmd):
 
 
 @cmds.register("clear_all_stress")
+@implicit_edit
 def _clear_all_stress(game, cmd):
     # Stress tracks that do not get auto-cleared
     do_not_clear = [
@@ -529,6 +550,7 @@ def _ensure_order(g):
 
 
 @cmds.register("order_add")
+@implicit_edit
 def _order_add(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
@@ -543,6 +565,7 @@ def _order_add(game, cmd):
 
 
 @cmds.register("next")
+@implicit_edit
 def _next(game, cmd):
     g = game["data"]
     _ensure_order(g)
@@ -556,6 +579,7 @@ def _next(game, cmd):
 
 
 @cmds.register("back")
+@implicit_edit
 def _back(game, cmd):
     g = game["data"]
     _ensure_order(g)
@@ -569,6 +593,7 @@ def _back(game, cmd):
 
 
 @cmds.register("drop_from_order")
+@implicit_edit
 def _drop_from_order(game, cmd):
     g = game["data"]
     entity = cmd.get("entity")
@@ -586,6 +611,7 @@ def _drop_from_order(game, cmd):
 
 
 @cmds.register("defer")
+@implicit_edit
 def _order_defer(game, cmd):
     g = game["data"]
     _ensure_order(g)
@@ -606,6 +632,7 @@ def _order_defer(game, cmd):
 
 
 @cmds.register("undefer")
+@implicit_edit
 def _order_undefer(game, cmd):
     g = game["data"]
     _ensure_order(g)
@@ -624,6 +651,7 @@ def _order_undefer(game, cmd):
 
 
 @cmds.register("start_order")
+@implicit_edit
 def _start_order(game, cmd):
     g = game["data"]
     _ensure_order(g)
@@ -637,18 +665,20 @@ def _start_order(game, cmd):
 
 
 @cmds.register("clear_order")
+@implicit_edit
 def _clear_order(game, cmd):
     g = game["data"]
     g["order"] = _default_order()
     return _ok(g["order"])
 
 
-@cmds.register("implicit_test", no_implicit_edit=True)
+@cmds.register("implicit_test")
 def _implicit_test(cmd):
     return _ok(cmd)
 
 
 @cmds.register("test")
+@implicit_edit
 def _test(game, cmd):
     return _ok(cmd.get("string", "foo"))
 
