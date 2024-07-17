@@ -4,6 +4,8 @@ from command_stream import wait_for_result
 import database
 from functools import wraps
 from typing import Optional
+import time
+import random
 
 from errors import _ok
 from errors import _exception
@@ -11,6 +13,9 @@ from errors import _fail
 from errors import _error
 from utils import get_path
 from utils import flat_diff
+
+
+undo_predecessors = {}
 
 
 @litestar.get("/")
@@ -86,6 +91,34 @@ async def get_checkpoint_diff(id_: int, base: Optional[int] = None) -> dict:
         return _exception(err)
 
 
+@litestar.post("/undo")
+async def undo() -> dict:
+    current = database.get_checkpoint()
+    pre = undo_predecessors.get(current, database.roll(current, -1))
+    post = database.roll(current, 1)
+    # Wait to make sure there is no contention
+    time.sleep(1 + random.random())
+    if database.get_checkpoint() != current:
+        return _error(
+            current,
+            f"Can't undo while doing other operations.  Please try again.",
+        )
+
+    undo_predecessors[post] = pre
+
+    try:
+        checkpoint_data = database.read(pre)
+        key = insert_command(
+            {
+                "command": "overwrite_state",
+                "state": checkpoint_data,
+            }
+        )
+        return _ok(wait_for_result(key))
+    except Exception as err:
+        return _exception(err)
+
+
 @litestar.get("/game")
 async def get_game() -> dict:
     try:
@@ -142,5 +175,6 @@ routes = [
     get_entity,
     post_entity,
     create_entity,
+    undo,
 ]
 app = litestar.Litestar(routes)
