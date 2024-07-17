@@ -24,7 +24,7 @@ class CommandRegistrar:
     def __init__(self):
         self.commands = {}
 
-    def register(self, *names):
+    def register(self, *names, no_implicit_edit=False):
 
         def _register(func):
             for name in names:
@@ -33,6 +33,11 @@ class CommandRegistrar:
             @wraps(func)
             def _a(*args, **kwargs):
                 return func(*args, **kwargs)
+
+            if no_implicit_edit:
+                print(f"{func} has no implicit edit")
+                func.__no_implicit_edit = True
+                _a.__no_implicit_edit = True
 
             return _a
 
@@ -45,12 +50,17 @@ class CommandRegistrar:
 cmds = CommandRegistrar()
 
 
-def process_command(game, cmd, entry_id=None):
+def process_command(cmd, entry_id=None):
     func = cmds.get(cmd.get("command"))
 
     if func:
         try:
-            result = func(game, cmd)
+            if hasattr(func, "__no_implicit_edit"):
+                print(f"Processing {func} with no implicit edit")
+                result = func(cmd)
+            else:
+                with database.editing() as game:
+                    result = func(game, cmd)
         except Exception as err:
             result = _exception(err)
     else:
@@ -633,6 +643,11 @@ def _clear_order(game, cmd):
     return _ok(g["order"])
 
 
+@cmds.register("implicit_test", no_implicit_edit=True)
+def _implicit_test(cmd):
+    return _ok(cmd)
+
+
 @cmds.register("test")
 def _test(game, cmd):
     return _ok(cmd.get("string", "foo"))
@@ -654,11 +669,10 @@ def commands_incoming():
 def main_loop():
     last = "$"
     while True:
-        with database.editing() as game:
-            for (entry_id, command) in wait_for_commands(last):
-                res = process_command(game, command, entry_id=entry_id)
-                print(f"main | {command} | {res}")
-                last = entry_id
+        for (entry_id, command) in wait_for_commands(last):
+            res = process_command(command, entry_id=entry_id)
+            print(f"main | {command} | {res}")
+            last = entry_id
 
 
 def main():
