@@ -233,7 +233,6 @@ def _refresh_fp(game, cmd):
 
 @cmds.register("add_aspect")
 @implicit_edit
-@implicit_edit
 def _add_aspect(game, cmd):
     g = game["data"]
     entity = cmd["entity"]
