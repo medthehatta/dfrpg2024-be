@@ -13,10 +13,16 @@ keep = 50
 
 
 def get_checkpoint():
-    return int(redis.get(checkpoint) or 0)
+    chkpt = redis.get(checkpoint)
+    if chkpt is not None:
+        return int(chkpt)
+    else:
+        return None
 
 
 def roll(k, amount):
+    if k is None:
+        k = 0
     return (k + amount) % keep
 
 
@@ -69,7 +75,7 @@ def incrementing_checkpoint():
 
 def read(k=None):
     k = k or get_checkpoint()
-    if k == 0:
+    if k is None:
         return {}
 
     return json.loads(redis.get(f"db-save-{k}") or "null")
