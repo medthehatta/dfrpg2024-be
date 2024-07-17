@@ -72,8 +72,8 @@ def _create_entity(game, cmd):
     g = game["data"]
     name = cmd["name"]
     maxes = cmd.get("stress_maxes") or {}
-    refresh = cmd.get("refresh") or 0
-    fate = cmd.get("fate") or 0
+    refresh = int(cmd.get("refresh") or 0)
+    fate = int(cmd.get("fate") or 0)
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
@@ -87,8 +87,50 @@ def _create_entity(game, cmd):
         "fate": fate,
         "refresh": refresh,
         "aspects": [],
-        "stress": {k: {"checked": [], "max": m} for (k, m) in maxes.items()},
+        "stress": {
+            k: {"checked": [], "max": int(m)}
+            for (k, m) in maxes.items()
+            if m > 0
+        },
     }
+    return _ok(entities[name])
+
+
+@cmds.register("edit_entity")
+def _edit_entity(game, cmd):
+    g = game["data"]
+    name = cmd["name"]
+    maxes = cmd.get("stress_maxes")
+    refresh = cmd.get("refresh")
+    fate = cmd.get("fate")
+    print(f"EDIT {cmd}")
+    if "entities" not in g:
+        g["entities"] = {}
+    entities = get_path(g, ["entities"])
+    if name not in entities:
+        return _error(
+            list(entities.keys()),
+            f"Entity {name} does not exist!",
+        )
+
+    if refresh is not None:
+        entities[name]["refresh"] = int(refresh)
+
+    if fate is not None:
+        entities[name]["fate"] = int(fate)
+
+    e_stress = entities[name]["stress"]
+    for (stress_type, max_stress) in maxes.items():
+        if max_stress is None:
+            continue
+        if stress_type in e_stress:
+            if max_stress == 0:
+                e_stress.pop(stress_type)
+            else:
+                e_stress[stress_type]["max"] = int(max_stress)
+        else:
+            e_stress[stress_type] = {"checked": [], "max": int(max_stress)}
+
     return _ok(entities[name])
 
 
