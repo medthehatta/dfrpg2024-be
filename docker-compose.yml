@@ -34,3 +34,5 @@ services:
 volumes:
   redis_data:
     driver: local
+  redis_data_prod:
+    driver: local
