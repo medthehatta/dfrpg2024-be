@@ -8,6 +8,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - 'redis_data:/bitnami/redis/data'
+    ports:
+      - "65001:6379"
 
   web:
     image: dfrpg2024-be-web
@@ -20,14 +22,14 @@ services:
     ports:
       - "6501:80"
 
-  backend:
-    image: dfrpg2024-be-1
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+  # backend:
+  #   image: dfrpg2024-be-1
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.backend
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD}
 
 volumes:
   redis_data:

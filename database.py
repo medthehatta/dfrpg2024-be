@@ -55,12 +55,14 @@ def incrementing_checkpoint():
     initial = get_checkpoint()
     new = roll(initial, 1)
     try:
-        yield new
+        yield (initial, new)
 
-    except Exception:
+    except Exception as err:
+        print(f"Not incrementing: {err}.  Checkpoint is: {initial}")
         return initial
 
     else:
+        print(f"Advancing to checkpoint {new}")
         redis.set(checkpoint, new)
         return new
 
@@ -70,20 +72,26 @@ def read(k=None):
     if k == 0:
         return {}
 
-    return json.loads(redis.get(f"db-save-{k}") or "{}")
+    return json.loads(redis.get(f"db-save-{k}") or "null")
 
 
 def write(data):
-    with incrementing_checkpoint() as k:
-        current = read(roll(k, -1))
+    with incrementing_checkpoint() as (old, new):
+        current = read(old)
         if current != data:
-            redis.set(f"db-save-{k}", json.dumps(data))
-            redis.set(f"ts:db-save-{k}", datetime.datetime.now().timestamp())
-        else:
             print(
-                f"Skipping commit of checkpoint {k} as there is no change "
-                f"to the state."
+                f"Found change from data in checkpoint {old}:"
+                f"\nold={current}\n{data=}"
             )
+            redis.set(f"db-save-{new}", json.dumps(data))
+            redis.set(f"ts:db-save-{new}", datetime.datetime.now().timestamp())
+        else:
+            msg = (
+                f"Skipping commit of checkpoint {new} as there is no change "
+                f"to the state.  Using checkpoint {old}."
+            )
+            print(msg)
+            raise ValueError(msg)
 
 
 @contextmanager
@@ -92,5 +100,7 @@ def editing():
     enveloped = {"data": game}
     try:
         yield enveloped
-    finally:
-        write(enveloped.get("data", {}))
+    except Exception:
+        print(f"Error editing state.  Found: {enveloped=}")
+    else:
+        write(enveloped.get("data"))

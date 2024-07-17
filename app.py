@@ -14,7 +14,10 @@ from utils import flat_diff
 
 @litestar.get("/")
 async def index() -> dict:
-    return _ok("Hello, world!")
+    try:
+        return _ok("Hello, world!")
+    except Exception:
+        return _exception(err)
 
 
 @litestar.post("/commands")
@@ -29,32 +32,48 @@ async def issue_command(data: dict) -> dict:
 
 @litestar.get("/checkpoints")
 async def get_checkpoints() -> dict:
-    return _ok(database.checkpoint_data())
+    try:
+        return _ok(database.checkpoint_data())
+    except Exception:
+        return _exception(err)
 
 
 @litestar.get("/checkpoint/{id_:int}")
 async def get_checkpoint(id_: int) -> dict:
-    return _ok(database.read(id_))
+    try:
+        return _ok(database.read(id_))
+    except Exception:
+        return _exception(err)
+
+
+@litestar.post("/checkpoint")
+async def set_checkpoint(data: int) -> dict:
+    try:
+        return _ok(database.set_checkpoint(data))
+    except Exception:
+        return _exception(err)
 
 
 @litestar.get("/checkpoint/{id_:int}/diff")
 async def get_checkpoint_diff(id_: int) -> dict:
-    previous = database.read(database.roll(id_, -1))
-    current = database.read(id_)
-    diffed = list(flat_diff(previous, current))
-    result = {
-        "insertions": [
-            (x, a) for (op, x, a, *bs) in diffed if op == "insert"
-        ],
-        "deletions": [
-            (x, a) for (op, x, a, *bs) in diffed if op == "delete"
-        ],
-        "changes": [
-            (x, a, bs[0]) for (op, x, a, *bs) in diffed if op == "edit"
-        ],
-    }
-
-    return _ok(result)
+    try:
+        previous = database.read(database.roll(id_, -1))
+        current = database.read(id_)
+        diffed = list(flat_diff(previous, current))
+        result = {
+            "insertions": [
+                (x, a) for (op, x, a, *bs) in diffed if op == "insert"
+            ],
+            "deletions": [
+                (x, a) for (op, x, a, *bs) in diffed if op == "delete"
+            ],
+            "changes": [
+                (x, a, bs[0]) for (op, x, a, *bs) in diffed if op == "edit"
+            ],
+        }
+        return _ok(result)
+    except Exception as err:
+        return _exception(err)
 
 
 @litestar.get("/game")
@@ -76,7 +95,10 @@ async def get_entity(name: str) -> dict:
             f"No such entity '{name}'",
         )
     else:
-        return _ok(entity)
+        try:
+            return _ok(entity)
+        except Exception as err:
+            return _exception(err)
 
 
 @litestar.post("/entity/{name:str}")
@@ -105,6 +127,7 @@ routes = [
     get_checkpoints,
     get_checkpoint,
     get_checkpoint_diff,
+    set_checkpoint,
     get_game,
     get_entity,
     post_entity,

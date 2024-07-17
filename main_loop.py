@@ -6,7 +6,7 @@ from command_stream import wait_for_commands
 from command_stream import read_command_log
 from command_stream import store_result
 from contextlib import contextmanager
-from database import editing
+import database
 from utils import get_path
 from errors import _ok
 from errors import _error
@@ -651,17 +651,10 @@ def commands_incoming():
         yield from wait_for_commands()
 
 
-def populate():
-    with editing() as game:
-        for (_, command) in read_command_log():
-            res = process_command(game, command, entry_id=None)
-            print(f"populate | {command} | {res}")
-
-
 def main_loop():
     last = "$"
     while True:
-        with editing() as game:
+        with database.editing() as game:
             for (entry_id, command) in wait_for_commands(last):
                 res = process_command(game, command, entry_id=entry_id)
                 print(f"main | {command} | {res}")
@@ -669,9 +662,8 @@ def main_loop():
 
 
 def main():
-    print("Populating with log...")
-    populate()
-    print("Done.")
+    checkpoint = database.get_checkpoint()
+    print(f"Loading from checkpoint {checkpoint}.")
     print("Reading stream...")
     main_loop()
 

@@ -89,7 +89,7 @@ def flat_diff(struct1, struct2):
 
 
 def _flatten_struct(struct, path=None):
-    path = path or []
+    path = path or tuple([])
     if isinstance(struct, dict):
         return sum(
             [
