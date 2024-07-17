@@ -49,9 +49,17 @@ async def get_checkpoint(id_: int) -> dict:
 
 @litestar.post("/checkpoint")
 async def set_checkpoint(data: int) -> dict:
+    checkpoint_id = data
     try:
-        return _ok(database.set_checkpoint(data))
-    except Exception:
+        checkpoint_data = database.read(checkpoint_id)
+        key = insert_command(
+            {
+                "command": "overwrite_state",
+                "state": checkpoint_data,
+            }
+        )
+        return _ok(wait_for_result(key))
+    except Exception as err:
         return _exception(err)
 
 

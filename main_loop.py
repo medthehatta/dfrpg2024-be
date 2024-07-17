@@ -672,6 +672,13 @@ def _clear_order(game, cmd):
     return _ok(g["order"])
 
 
+@cmds.register("overwrite_state")
+@implicit_edit
+def _overwrite_state(game, cmd):
+    game["data"] = cmd["state"]
+    return _ok(game["data"])
+
+
 @cmds.register("implicit_test")
 def _implicit_test(cmd):
     return _ok(cmd)

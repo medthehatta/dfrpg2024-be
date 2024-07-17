@@ -53,7 +53,7 @@ def wait_for_result(key):
     query_eventually(
         _read_result,
         _is_ready,
-        interval=1,
+        interval=0.1,
         max_time=5,
     )
 
