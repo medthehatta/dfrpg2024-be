@@ -3,6 +3,7 @@ from command_stream import insert_command
 from command_stream import wait_for_result
 import database
 from functools import wraps
+from typing import Optional
 
 from errors import _ok
 from errors import _exception
@@ -55,9 +56,10 @@ async def set_checkpoint(data: int) -> dict:
 
 
 @litestar.get("/checkpoint/{id_:int}/diff")
-async def get_checkpoint_diff(id_: int) -> dict:
+async def get_checkpoint_diff(id_: int, base: Optional[int] = None) -> dict:
     try:
-        previous = database.read(database.roll(id_, -1))
+        base = base or database.roll(id_, -1)
+        previous = database.read(base)
         current = database.read(id_)
         diffed = list(flat_diff(previous, current))
         result = {
