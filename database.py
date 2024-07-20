@@ -6,6 +6,7 @@ import re
 import datetime
 
 from db_redis import redis
+from errors import _exception
 
 
 checkpoint = "persist-checkpoint"
@@ -107,6 +108,11 @@ def editing():
     try:
         yield enveloped
     except Exception as err:
-        print(f"Error editing state.  Found: {enveloped=} {err=}")
+        exc = _exception(err)
+        print(
+            f"Error editing state.  "
+            f"Encountered exception (next line):\n{exc}\n"
+            f"Saw data (next line):\n{enveloped})"
+        )
     else:
         write(enveloped.get("data"))
