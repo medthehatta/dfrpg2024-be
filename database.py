@@ -106,7 +106,7 @@ def editing():
     enveloped = {"data": game}
     try:
         yield enveloped
-    except Exception:
-        print(f"Error editing state.  Found: {enveloped=}")
+    except Exception as err:
+        print(f"Error editing state.  Found: {enveloped=} {err=}")
     else:
         write(enveloped.get("data"))

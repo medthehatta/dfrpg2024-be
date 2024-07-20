@@ -103,7 +103,7 @@ def _create_entity(game, cmd):
         "stress": {
             k: {"checked": [], "max": int(m)}
             for (k, m) in maxes.items()
-            if m > 0
+            if int(m) > 0
         },
     }
     return _ok(entities[name])
