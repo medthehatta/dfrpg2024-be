@@ -532,7 +532,7 @@ def _clear_all_stress(game, cmd):
 def _default_order():
     default_order = {}
     default_order["entities"] = []
-    default_order["bonuses"] = []
+    default_order["bonuses"] = {}
     default_order["order"] = []
     default_order["current"] = None
     default_order["deferred"] = []
