@@ -530,17 +530,13 @@ def _clear_all_stress(game, cmd):
 
 
 def _default_order():
-    default_order = {
-        "entities": [],
-        "bonuses": {},
-        "order": [],
-        "current": None,
-        "deferred": [],
-    }
-    return {
-        k: (v.copy() if hasattr(v, "copy") else v)
-        for (k, v) in default_order.items()
-    }
+    default_order = {}
+    default_order["entities"] = []
+    default_order["bonuses"] = []
+    default_order["order"] = []
+    default_order["current"] = None
+    default_order["deferred"] = []
+    return default_order
 
 
 def _ensure_order(g):
