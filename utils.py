@@ -110,3 +110,18 @@ def _flatten_struct(struct, path=None):
         return [(path, struct)]
 
 
+def drop_if(predicate, sequence):
+    return [x for x in sequence if not predicate(x)]
+
+
+def drop_unless(predicate, sequence):
+    return [x for x in sequence if predicate(x)]
+
+
+class Predicates:
+
+    @classmethod
+    def equal(cls, x):
+        def _(y):
+            return x == y
+        return _

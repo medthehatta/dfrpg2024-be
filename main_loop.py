@@ -8,6 +8,8 @@ from command_stream import store_result
 from contextlib import contextmanager
 import database
 from utils import get_path
+from utils import drop_if
+from utils import Predicates
 from errors import _ok
 from errors import _error
 from errors import _exception
@@ -175,6 +177,22 @@ def _remove_entity(game, cmd):
         )
     else:
         entities.pop(name)
+        # Remove from the turn order if it's in there
+        _ensure_order(g)
+        g["order"]["deferred"] = drop_if(
+            Predicates.equal(name),
+            g["order"]["deferred"],
+        )
+        g["order"]["order"] = drop_if(
+            Predicates.equal(name),
+            g["order"]["order"],
+        )
+        g["order"]["entities"] = drop_if(
+            Predicates.equal(name),
+            g["order"]["entities"],
+        )
+        if name in g["order"]["bonuses"]:
+            g["order"]["bonuses"].pop(name)
         return _ok(entities)
 
 
