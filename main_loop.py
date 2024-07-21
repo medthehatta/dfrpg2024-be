@@ -430,22 +430,6 @@ def _add_stress(game, cmd):
     return _ok(e)
 
 
-def _absorb(available, amount):
-    if amount <= 0:
-        return []
-
-    if sum(available) < amount:
-        raise ValueError(available)
-
-    try:
-        value = max(x for x in available if x <= amount)
-        return [value] + _absorb([x for x in available if x < value], amount - value)
-
-    except ValueError:
-        value = min(x for x in available if x >= amount)
-        return [value] + _absorb([x for x in available if x != value], amount - value)
-
-
 @cmds.register("absorb_stress")
 @implicit_edit
 def _absorb_stress(game, cmd):
@@ -462,11 +446,11 @@ def _absorb_stress(game, cmd):
     ]
 
     try:
-        result = _absorb(available, amount)
-        s["checked"].extend(result)
+        result = next(a for a in available if a >= amount)
+        s["checked"].append(result)
         return _ok(e)
 
-    except ValueError:
+    except StopIteration:
         return _error(
             e,
             (
