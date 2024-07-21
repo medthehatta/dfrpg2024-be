@@ -587,6 +587,9 @@ def _order_add(game, cmd):
     g["order"]["entities"] = list(
         set(g["order"]["entities"]).union({entity})
     )
+    g["order"]["deferred"] = list(
+        set(g["order"]["deferred"]).union({entity})
+    )
     g["order"]["bonuses"][entity] = bonus
     return _ok(g["order"])
 
@@ -687,6 +690,7 @@ def _start_order(game, cmd):
         key=lambda x: (g["order"]["bonuses"].get(x, 0), random.random()),
         reverse=True,
     )
+    g["order"]["deferred"] = []
     g["order"]["current"] = 0
     return _ok(g["order"])
 
