@@ -283,24 +283,54 @@ def _tag_aspect(game, cmd):
     aspect_name = cmd["name"]
     e = get_path(g, ["entities", entity])
     current_names = [a["name"].lower() for a in e.get("aspects", [])]
-    if aspect_name.lower() in current_names:
-        aspect = next(
-            a for a in e.get("aspects", [])
-            if a["name"].lower() == aspect_name.lower()
+    possible_matches = [
+        a for a in e.get("aspects", [])
+        if aspect_name.lower() in a["name"].lower()
+    ]
+    possible_names = [a["name"] for a in possible_matches]
+
+    if len(possible_matches) == 0:
+        return _error(
+            e["aspects"],
+            f"No aspect '{aspect_name}' present on '{entity}'",
         )
-        if aspect["tags"] > 0:
-            aspect["tags"] -= 1
-            return _ok(e)
-        else:
-            return _error(
-                e["aspects"],
-                f"Aspect '{aspect_name}' on '{entity}' has no free tags",
-            )
+
+    elif len(possible_matches) == 1:
+        aspect = possible_matches[0]
+
+    elif aspect := next(
+        (
+            a for a in possible_matches
+            if a["name"].lower() == aspect_name.lower()
+        ),
+        None,
+    ):
+        pass
 
     else:
         return _error(
             e["aspects"],
-            f"No aspect '{aspect_name}' present on '{entity}'",
+            (
+                f"Ambiguous: '{aspect_name}' could refer to any of the "
+                f"following aspects on '{entity}': "
+                f"{', '.join(possible_names)}"
+            ),
+        )
+
+    # Process the aspect if found
+    if aspect.get("kind") == "fragile":
+        e["aspects"] = [
+            a for a in e.get("aspects", [])
+            if a["name"].lower() != aspect_name.lower()
+        ]
+        return _ok(e)
+    elif aspect["tags"] > 0:
+        aspect["tags"] -= 1
+        return _ok(e)
+    else:
+        return _error(
+            e["aspects"],
+            f"Aspect '{aspect_name}' on '{entity}' has no free tags",
         )
 
 
