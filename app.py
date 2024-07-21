@@ -1,4 +1,6 @@
 import litestar
+from litestar.config.cors import CORSConfig
+
 from command_stream import insert_command
 from command_stream import wait_for_result
 import database
@@ -177,4 +179,8 @@ routes = [
     create_entity,
     undo,
 ]
-app = litestar.Litestar(routes)
+cors_config = CORSConfig(allow_origins=["*"])
+app = litestar.Litestar(
+    route_handlers=routes,
+    cors_config=cors_config,
+)
