@@ -11,11 +11,11 @@ services:
     ports:
       - "65001:6379"
 
-  web:
-    image: dfrpg2024-be-web
+  http:
+    image: dfrpg2024-be-http
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: Dockerfile.http
     environment:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
