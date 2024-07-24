@@ -1,6 +1,4 @@
-#!/bin/bash
-while true
-do
-    [[ -n "$(git status --porcelain)" ]] || { git fetch origin main && git reset --hard FETCH_HEAD; }
-    docker-compose up --build
+while true; do
+    python /app/main_loop.py
+    sleep 0.5
 done
