@@ -84,6 +84,8 @@ def process_command(cmd, entry_id=None):
 @cmds.register("create_entity")
 @implicit_edit
 def _create_entity(game, cmd):
+    elder_sign = "https://imgur.com/WPk0XRj"
+    generic_portrait_url = elder_sign
     g = game["data"]
     name = cmd["name"]
     maxes = cmd.get("stress_maxes") or {}
@@ -107,6 +109,7 @@ def _create_entity(game, cmd):
             for (k, m) in maxes.items()
             if int(m) > 0
         },
+        "portrait": generic_portrait_url,
     }
     return _ok(entities[name])
 
@@ -194,6 +197,23 @@ def _remove_entity(game, cmd):
         if name in g["order"]["bonuses"]:
             g["order"]["bonuses"].pop(name)
         return _ok(entities)
+
+
+@cmds.register("set_portrait")
+@implicit_edit
+def _set_portrait(game, cmd):
+    g = game["data"]
+    name = cmd["entity"]
+    portrait_url = cmd["portrait_url"]
+    entities = get_path(g, ["entities"])
+    if name not in entities:
+        return _error(
+            list(entities.keys()),
+            f"Entity {name} not present!",
+        )
+    e = get_path(g, ["entities", name])
+    e["portrait"] = portrait_url
+    return _ok(e)
 
 
 @cmds.register("decrement_fp")
