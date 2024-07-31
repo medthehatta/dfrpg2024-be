@@ -138,7 +138,7 @@ def _edit_entity(game, cmd):
         entities[name]["fate"] = int(fate)
 
     if is_pc is not None:
-        entities[name]["is_pc"] = is_pc
+        entities[name]["is_pc"] = True if is_pc else False
 
     e_stress = entities[name]["stress"]
     for (stress_type, max_stress) in maxes.items():
