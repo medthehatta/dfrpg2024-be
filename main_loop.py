@@ -84,13 +84,12 @@ def process_command(cmd, entry_id=None):
 @cmds.register("create_entity")
 @implicit_edit
 def _create_entity(game, cmd):
-    elder_sign = "https://imgur.com/WPk0XRj"
-    generic_portrait_url = elder_sign
     g = game["data"]
     name = cmd["name"]
     maxes = cmd.get("stress_maxes") or {}
     refresh = int(cmd.get("refresh") or 0)
     fate = int(cmd.get("fate") or 0)
+    is_pc = cmd.get("is_pc", False)
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
@@ -109,7 +108,7 @@ def _create_entity(game, cmd):
             for (k, m) in maxes.items()
             if int(m) > 0
         },
-        "portrait": generic_portrait_url,
+        "is_pc": is_pc,
     }
     return _ok(entities[name])
 
@@ -122,6 +121,7 @@ def _edit_entity(game, cmd):
     maxes = cmd.get("stress_maxes")
     refresh = cmd.get("refresh")
     fate = cmd.get("fate")
+    is_pc = cmd.get("is_pc")
     if "entities" not in g:
         g["entities"] = {}
     entities = get_path(g, ["entities"])
@@ -136,6 +136,9 @@ def _edit_entity(game, cmd):
 
     if fate is not None:
         entities[name]["fate"] = int(fate)
+
+    if is_pc is not None:
+        entities[name]["is_pc"] = is_pc
 
     e_stress = entities[name]["stress"]
     for (stress_type, max_stress) in maxes.items():
@@ -204,7 +207,7 @@ def _remove_entity(game, cmd):
 def _set_portrait(game, cmd):
     g = game["data"]
     name = cmd["entity"]
-    portrait_url = cmd["portrait_url"]
+    portrait_url = cmd.get("portrait_url", "")
     entities = get_path(g, ["entities"])
     if name not in entities:
         return _error(
